@@ -2,7 +2,6 @@ name: AQI Feature Pipeline
 
 on:
   schedule:
-    # Runs every hour
     - cron: "0 * * * *"
 
   workflow_dispatch:
