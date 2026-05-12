@@ -1,0 +1,47 @@
+name: AQI Feature Pipeline
+
+on:
+  schedule:
+    # Runs every hour
+    - cron: "0 * * * *"
+
+  workflow_dispatch:
+
+jobs:
+  run-feature-pipeline:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run Feature Pipeline
+        env:
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          LAT: 24.8607
+          LON: 67.0011
+
+        run: |
+          python pipelines/feature_pipeline.py
+
+      - name: Commit Updated Data
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+
+          git add data/aqi_data.csv
+
+          git commit -m "Automated AQI dataset update" || echo "No changes to commit"
+
+          git push
