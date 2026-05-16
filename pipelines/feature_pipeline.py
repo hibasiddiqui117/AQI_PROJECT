@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
-LAT = os.getenv("LAT")
-LON = os.getenv("LON")
+LAT = os.getenv("LAT", "24.8607")
+LON = os.getenv("LON", "67.0011")
 
 # API URL
 url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={LAT}&lon={LON}&appid={API_KEY}"
