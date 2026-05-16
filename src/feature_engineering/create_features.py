@@ -25,18 +25,24 @@ df["aqi_change"] = df["aqi"].diff()
 # AQI CLASSIFICATION TARGET
 # Based on PM2.5 (REAL WORLD LOGIC)
 
-df["aqi_class"] = df["pm2_5"].apply(lambda x:
-    1 if x <= 50 else
-    2 if x <= 100 else
-    3 if x <= 150 else
-    4 if x <= 200 else
-    5
+# Create AQI classes dynamically
+
+df["aqi_class"] = pd.qcut(
+    df["pm2_5"],
+    q=3,
+    duplicates="drop"
 )
+
+# Convert categories into numeric labels
+df["aqi_class"] = df["aqi_class"].cat.codes + 1
 
 # CLEAN DATA
 
-df.dropna(inplace=True)
+# REMOVE DUPLICATE ROWS
+df.drop_duplicates(inplace=True)
 
+# REMOVE MISSING VALUES
+df.dropna(inplace=True)
 
 # SAVE PROCESSED DATASET
 
