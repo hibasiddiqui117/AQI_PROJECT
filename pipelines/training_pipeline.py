@@ -26,10 +26,19 @@ print("Dataset Shape:", df.shape)
 
 # FEATURES
 features = [
-    "co", "no", "no2", "o3", "so2",
-    "pm2_5", "pm10", "nh3",
-    "hour", "day", "month",
-    "aqi_lag_1", "aqi_rolling_mean", "aqi_change"
+    "co",
+    "no",
+    "no2",
+    "o3",
+    "so2",
+    "pm10",
+    "nh3",
+    "hour",
+    "day",
+    "month",
+    "aqi_lag_1",
+    "aqi_rolling_mean",
+    "aqi_change"
 ]
 
 X = df[features]
