@@ -6,6 +6,9 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   run-feature-pipeline:
 
@@ -15,6 +18,8 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
 
       - name: Set Up Python
         uses: actions/setup-python@v5
@@ -41,6 +46,6 @@ jobs:
 
           git add data/aqi_data.csv
 
-          git commit -m "Automated AQI dataset update" || echo "No changes to commit"
+          git commit -m "Automated AQI update" || echo "No changes"
 
           git push
