@@ -56,7 +56,8 @@ if response.status_code == 200:
 
     # Save updated dataset
     df_final.to_csv(file_path, index=False)
-
+    print("🚀 Feature pipeline started...")
+    print("Rows before save:", len(df_final))
     print("✅ Feature Pipeline Updated Successfully!")
     print(df_new)
 
