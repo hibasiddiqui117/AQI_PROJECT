@@ -2,51 +2,74 @@ name: AQI Feature Pipeline
 
 on:
   schedule:
-    - cron: "0 * * * *"
-
-  workflow_dispatch:
+    # Runs every hour at minute 5
+    - cron: "5 * * * *"
+  workflow_dispatch:  # Allows manual trigger
 
 permissions:
-  contents: write
+  contents: write  # Needed to push changes
 
 jobs:
   run-feature-pipeline:
-
     runs-on: ubuntu-latest
-
+    
     steps:
-
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           persist-credentials: true
-
+          fetch-depth: 0  # Fetch all history for proper merging
+      
       - name: Set Up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
+      
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
-
+      
       - name: Run Feature Pipeline
         env:
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
           LAT: 24.8607
           LON: 67.0011
-
         run: |
           python pipelines/feature_pipeline.py
-      - name: Commit Updated Data
+      
+      - name: Check for Changes
+        id: git-check
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-
-          git pull
-
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if data file has changes
+          if git diff --quiet data/aqi_data.csv; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes to commit"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in data file"
+          fi
+      
+      - name: Commit and Push Changes
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          # Pull latest changes to avoid conflicts
+          git pull --rebase origin main || true
+          
+          # Add and commit
           git add data/aqi_data.csv
-
-          git diff --cached --quiet || git commit -m "Automated AQI dataset update"
-
-          git push
+          git commit -m "🤖 Automated AQI data update - $(date '+%Y-%m-%d %H:%M:%S')"
+          
+          # Push changes
+          git push origin main
+          
+          echo "✅ Successfully committed and pushed data update"
+      
+      - name: Upload data as artifact (for debugging)
+        uses: actions/upload-artifact@v4
+        with:
+          name: aqi-data
+          path: data/aqi_data.csv
+          retention-days: 7
