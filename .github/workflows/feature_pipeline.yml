@@ -4,10 +4,10 @@ on:
   schedule:
     # Runs every hour at minute 5
     - cron: "5 * * * *"
-  workflow_dispatch:  # Allows manual trigger
+  workflow_dispatch:  # Manual trigger
 
 permissions:
-  contents: write  # Needed to push changes
+  contents: write
 
 jobs:
   run-feature-pipeline:
@@ -18,7 +18,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: true
-          fetch-depth: 0  # Fetch all history for proper merging
+          fetch-depth: 0
+      
+      - name: Debug - List files before pipeline
+        run: |
+          echo "=== Current Directory ==="
+          pwd
+          echo "=== Files before pipeline ==="
+          ls -la
+          echo "=== Data directory (if exists) ==="
+          ls -la data/ 2>/dev/null || echo "No data directory yet"
       
       - name: Set Up Python
         uses: actions/setup-python@v5
@@ -27,7 +36,10 @@ jobs:
       
       - name: Install Dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
+          echo "=== Installed packages ==="
+          pip list
       
       - name: Run Feature Pipeline
         env:
@@ -37,39 +49,49 @@ jobs:
         run: |
           python pipelines/feature_pipeline.py
       
-      - name: Check for Changes
-        id: git-check
+      - name: Debug - List files after pipeline
+        if: always()
+        run: |
+          echo "=== Files after pipeline ==="
+          ls -la
+          echo "=== Data directory contents ==="
+          ls -la data/ 2>/dev/null || echo "No data directory"
+          echo "=== CSV file content (first 5 rows) ==="
+          head -5 data/aqi_data.csv 2>/dev/null || echo "No CSV file found"
+      
+      - name: Commit and Push Changes
+        if: success()
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Check if data file has changes
-          if git diff --quiet data/aqi_data.csv; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "No changes to commit"
+          # Check if data file exists and has changes
+          if [ -f "data/aqi_data.csv" ]; then
+            # Pull latest changes
+            git pull --rebase origin main || true
+            
+            # Add and commit
+            git add data/aqi_data.csv
+            
+            # Check if there are changes to commit
+            if git diff --cached --quiet; then
+              echo "No changes to commit"
+            else
+              git commit -m "🤖 Automated AQI data update - $(date '+%Y-%m-%d %H:%M:%S')"
+              git push origin main
+              echo "✅ Successfully pushed changes"
+            fi
           else
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "Changes detected in data file"
+            echo "No data file to commit"
           fi
       
-      - name: Commit and Push Changes
-        if: steps.git-check.outputs.changed == 'true'
-        run: |
-          # Pull latest changes to avoid conflicts
-          git pull --rebase origin main || true
-          
-          # Add and commit
-          git add data/aqi_data.csv
-          git commit -m "🤖 Automated AQI data update - $(date '+%Y-%m-%d %H:%M:%S')"
-          
-          # Push changes
-          git push origin main
-          
-          echo "✅ Successfully committed and pushed data update"
-      
-      - name: Upload data as artifact (for debugging)
+      - name: Upload debug artifacts
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: aqi-data
-          path: data/aqi_data.csv
-          retention-days: 7
+          name: debug-logs
+          path: |
+            data/
+            *.log
+            *.txt
+          retention-days: 3
