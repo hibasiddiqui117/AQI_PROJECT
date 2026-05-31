@@ -22,8 +22,8 @@ API_KEY = os.getenv("OPENWEATHER_API_KEY")
 LAT = os.getenv("LAT", "24.8607")
 LON = os.getenv("LON", "67.0011")
 
-print(f"\n🔑 API Key present: {'Yes' if API_KEY else 'No'}")
-print(f"📍 Coordinates: Lat={LAT}, Lon={LON}")
+print(f"\n API Key present: {'Yes' if API_KEY else 'No'}")
+print(f" Coordinates: Lat={LAT}, Lon={LON}")
 
 # Validate API key
 if not API_KEY:
@@ -35,7 +35,7 @@ if not API_KEY:
 # API URL
 url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={LAT}&lon={LON}&appid={API_KEY}"
 
-print(f"\n🌐 Fetching data from API...")
+print(f"\n Fetching data from API...")
 print(f"URL: {url.replace(API_KEY, 'HIDDEN')}")
 
 try:
@@ -48,13 +48,13 @@ except requests.exceptions.RequestException as e:
     sys.exit(1)
 
 if response.status_code == 200:
-    print("\n✅ API Request Successful!")
+    print("\n API Request Successful!")
     
     try:
         data = response.json()
         pollution = data["list"][0]
         
-        print(f"\n📊 Raw API Response:")
+        print(f"\n Raw API Response:")
         print(f"  - AQI: {pollution['main']['aqi']}")
         print(f"  - PM2.5: {pollution['components']['pm2_5']}")
         print(f"  - PM10: {pollution['components']['pm10']}")
@@ -73,24 +73,24 @@ if response.status_code == 200:
         }
         
         df_new = pd.DataFrame([row])
-        print(f"\n📊 Created new data row")
+        print(f"\n Created new data row")
         
         # Create data directory
         os.makedirs("data", exist_ok=True)
-        print(f"📁 Created/verified data directory")
+        print(f" Created/verified data directory")
         
         file_path = "data/aqi_data.csv"
         
         # If file exists, append safely
         if os.path.exists(file_path):
-            print(f"📂 Existing file found at {file_path}")
+            print(f" Existing file found at {file_path}")
             try:
                 df_existing = pd.read_csv(file_path)
                 print(f"  - Loaded {len(df_existing)} existing records")
                 
                 # Check if datetime column exists
                 if 'datetime' not in df_existing.columns:
-                    print(f"  ⚠️ 'datetime' column not found, recreating file")
+                    print(f"  'datetime' column not found, recreating file")
                     df_final = df_new
                 else:
                     df_final = pd.concat([df_existing, df_new], ignore_index=True)
@@ -98,24 +98,24 @@ if response.status_code == 200:
                     df_final = df_final.drop_duplicates(subset=["datetime"], keep='last')
                     print(f"  - Combined: {len(df_final)} total records")
             except Exception as e:
-                print(f"  ❌ Error reading existing file: {e}")
-                print(f"  📝 Creating new file instead")
+                print(f"  Error reading existing file: {e}")
+                print(f"  Creating new file instead")
                 df_final = df_new
         else:
-            print(f"📝 No existing file found, creating new one")
+            print(f" No existing file found, creating new one")
             df_final = df_new
         
         # Save updated dataset
         df_final.to_csv(file_path, index=False)
-        print(f"\n✅ Data saved to {file_path}")
-        print(f"📊 Total records in file: {len(df_final)}")
+        print(f"\n Data saved to {file_path}")
+        print(f" Total records in file: {len(df_final)}")
         
         # Verify save worked
         if os.path.exists(file_path):
             file_size = os.path.getsize(file_path)
-            print(f"💾 File size: {file_size} bytes")
+            print(f" File size: {file_size} bytes")
             if file_size > 0:
-                print("\n✅ Feature Pipeline Completed Successfully!")
+                print("\n Feature Pipeline Completed Successfully!")
                 print("="*60)
                 sys.exit(0)
             else:

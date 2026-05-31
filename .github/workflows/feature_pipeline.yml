@@ -77,9 +77,9 @@ jobs:
             if git diff --cached --quiet; then
               echo "No changes to commit"
             else
-              git commit -m "🤖 Automated AQI data update - $(date '+%Y-%m-%d %H:%M:%S')"
+              git commit -m "Automated AQI data update - $(date '+%Y-%m-%d %H:%M:%S')"
               git push origin main
-              echo "✅ Successfully pushed changes"
+              echo "Successfully pushed changes"
             fi
           else
             echo "No data file to commit"
