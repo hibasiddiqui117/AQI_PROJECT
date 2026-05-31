@@ -3,8 +3,11 @@ import pandas as pd
 from datetime import datetime
 import os
 import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import traceback
+
 from dotenv import load_dotenv
+from src.feature_store.dagshub_feature_store import save_features
 
 # Load env variables
 load_dotenv()
@@ -106,10 +109,23 @@ if response.status_code == 200:
             df_final = df_new
         
         # Save updated dataset
+        try:
+            print("\n Saving features to DagsHub Feature Store...")
+
+            save_features(df_final, "latest_features")
+
+            print(" Feature store update successful")
+
+        except Exception as e:
+            print(f" Feature store error (non-critical): {e}")
+
+        # -----------------------------
+        # SAVE LOCALLY
+
         df_final.to_csv(file_path, index=False)
         print(f"\n Data saved to {file_path}")
         print(f" Total records in file: {len(df_final)}")
-        
+
         # Verify save worked
         if os.path.exists(file_path):
             file_size = os.path.getsize(file_path)
