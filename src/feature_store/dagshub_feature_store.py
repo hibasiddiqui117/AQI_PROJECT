@@ -1,20 +1,34 @@
 import pandas as pd
 import os
 
-FEATURE_STORE_PATH = "data/feature_store"
+STORE_PATH = "data/feature_store"
 
-os.makedirs(FEATURE_STORE_PATH, exist_ok=True)
+os.makedirs(STORE_PATH, exist_ok=True)
 
-def save_features(df, version_name):
-    
-    path = f"{FEATURE_STORE_PATH}/{version_name}.csv"
+# -----------------------------
+# SAVE FEATURES (VERSIONED)
+# -----------------------------
+def save_features(df, version="v1"):
 
+    path = f"{STORE_PATH}/features_{version}.csv"
     df.to_csv(path, index=False)
 
-    print(f"Saved: {path}")
+    print(f"Saved Feature Store: {path}")
 
-def load_features(version_name):
+# -----------------------------
+# LOAD FEATURES
+# -----------------------------
+def load_features(version="v1"):
 
-    path = f"{FEATURE_STORE_PATH}/{version_name}.csv"
-
+    path = f"{STORE_PATH}/features_{version}.csv"
     return pd.read_csv(path)
+
+# -----------------------------
+# SAVE LATEST (AUTO UPDATE)
+# -----------------------------
+def save_latest(df):
+
+    path = f"{STORE_PATH}/latest_features.csv"
+    df.to_csv(path, index=False)
+
+    print("Updated Latest Feature Store")

@@ -1,53 +1,96 @@
 import pandas as pd
+import numpy as np
 
-# Load data
+# -----------------------------
+# LOAD DATA
+# -----------------------------
 df = pd.read_csv("data/aqi_data.csv")
 
-# Convert datetime
+# -----------------------------
+# CLEAN DATA FIRST
+# -----------------------------
 df["datetime"] = pd.to_datetime(df["datetime"])
+df = df.drop_duplicates()
+df = df.dropna()
 
+# -----------------------------
 # TIME FEATURES
+# -----------------------------
 df["hour"] = df["datetime"].dt.hour
 df["day"] = df["datetime"].dt.day
 df["month"] = df["datetime"].dt.month
 
-# LAG FEATURES (TIME SERIES MEMORY)
+# -----------------------------
+# SORT (IMPORTANT FOR TIME SERIES)
+# -----------------------------
+df = df.sort_values("datetime")
+
+# -----------------------------
+# LAG FEATURES
+# -----------------------------
 df["aqi_lag_1"] = df["aqi"].shift(1)
+df["aqi_lag_2"] = df["aqi"].shift(2)
 
-
-# ROLLING FEATURES (TREND)
+# -----------------------------
+# ROLLING FEATURES
+# -----------------------------
 df["aqi_rolling_mean"] = df["aqi"].rolling(window=3).mean()
+df["aqi_rolling_std"] = df["aqi"].rolling(window=3).std()
 
-# CHANGE RATE FEATURE
+# -----------------------------
+# CHANGE RATE
+# -----------------------------
 df["aqi_change"] = df["aqi"].diff()
 
+# -----------------------------
+# CLEAN AGAIN AFTER FEATURES
+# -----------------------------
+df = df.dropna()
 
-# AQI CLASSIFICATION TARGET
-# Based on PM2.5 (REAL WORLD LOGIC)
+# -----------------------------
+# REALISTIC AQI CLASS CREATION
+# (BASED ON PM2.5 - WORLD STANDARD)
+# -----------------------------
+def categorize_aqi(pm):
+    if pm <= 12:
+        return 1  # Good
+    elif pm <= 35:
+        return 2  # Moderate
+    elif pm <= 55:
+        return 3  # Unhealthy (Sensitive)
+    elif pm <= 150:
+        return 4  # Unhealthy
+    else:
+        return 5  # Hazardous
 
-# Create AQI classes dynamically
 
-df["aqi_class"] = pd.qcut(
-    df["pm2_5"],
-    q=3,
-    duplicates="drop"
-)
+df["aqi_class"] = df["pm2_5"].apply(categorize_aqi)
 
-# Convert categories into numeric labels
-df["aqi_class"] = df["aqi_class"].cat.codes + 1
+# -----------------------------
+# OPTIONAL: BALANCE DATA (SAFE VERSION)
+# -----------------------------
+def balance_aqi(df):
+    new_rows = []
 
-# CLEAN DATA
+    for _, row in df.iterrows():
 
-# REMOVE DUPLICATE ROWS
-df.drop_duplicates(inplace=True)
+        for shift in [-1, 0, 1]:
 
-# REMOVE MISSING VALUES
-df.dropna(inplace=True)
+            new_row = row.copy()
+            new_row["aqi_class"] = max(1, min(5, row["aqi_class"] + shift))
 
-# SAVE PROCESSED DATASET
+            new_rows.append(new_row)
 
+    return pd.DataFrame(new_rows)
+
+
+df = balance_aqi(df)
+
+# -----------------------------
+# SAVE PROCESSED DATA
+# -----------------------------
 df.to_csv("data/processed_aqi_data.csv", index=False)
 
 print("Feature Engineering Completed Successfully!")
 print("Final dataset shape:", df.shape)
-print(df.head())
+print(df["aqi_class"].value_counts())
