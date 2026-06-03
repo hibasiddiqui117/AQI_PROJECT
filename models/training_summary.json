@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-03T01:15:40.544627",
+  "timestamp": "2026-06-03T06:51:07.949046",
   "data_shape": [
     230,
     36
@@ -21,8 +21,8 @@
     "aqi_change"
   ],
   "features_count": 14,
-  "regression_mae": 15.533106076290842,
-  "regression_rmse": 21.469067604278123,
+  "regression_mae": 15.533106076290853,
+  "regression_rmse": 21.469067604278127,
   "regression_r2": 0.9741884710521572,
   "unique_classes": [
     1,
