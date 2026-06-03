@@ -4,8 +4,6 @@ on:
   schedule:
     # Runs daily at 2:00 AM UTC
     - cron: "0 2 * * *"
-  
-  # Allows manual trigger from GitHub UI
   workflow_dispatch:
 
 permissions:
@@ -30,8 +28,6 @@ jobs:
           ls -la
           echo "=== Data directory contents ==="
           ls -la data/ 2>/dev/null || echo "No data directory"
-          echo "=== Models directory ==="
-          ls -la models/ 2>/dev/null || echo "No models directory"
       
       - name: Set Up Python
         uses: actions/setup-python@v5
@@ -54,7 +50,7 @@ jobs:
           elif [ -f "data/aqi_data.csv" ]; then
             echo "Using aqi_data.csv"
             cp data/aqi_data.csv data/processed_aqi_data.csv
-          else:
+          else
             echo "No data file found!"
             exit 1
           fi
@@ -67,7 +63,7 @@ jobs:
         if: always()
         run: |
           echo "=== Models after training ==="
-          ls -la models/
+          ls -la models/ 2>/dev/null || echo "No models directory"
           echo "=== Training summary ==="
           cat models/training_summary.json 2>/dev/null || echo "No summary file"
       
@@ -77,18 +73,13 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Pull latest changes
           git pull --rebase origin main || true
+          git add models/ data/processed_aqi_data.csv
           
-          # Add all model files
-          git add models/
-          git add data/processed_aqi_data.csv
-          
-          # Check if there are changes
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Automated model training update - $(date -u '+%Y-%m-%d %H:%M:%S')"
+            git commit -m "Automated model training update - $(date -u '+%Y-%m-%d')"
             git push origin main
             echo "Successfully pushed updated models"
           fi
