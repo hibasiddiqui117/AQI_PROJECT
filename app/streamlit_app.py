@@ -1,5 +1,5 @@
 """
-AirNet Dashboard 
+AirNet Dashboard - Complete with Enhanced Weather Display
 """
 
 import streamlit as st
@@ -30,7 +30,7 @@ st.set_page_config(
 )
 
 # ============================================
-# HEADLINE SECTION - ADDED HERE
+# HEADLINE SECTION
 # ============================================
 st.markdown("""
 <div style="text-align: center; padding: 1rem 0 0.5rem 0;">
@@ -88,6 +88,27 @@ st.markdown("""
         font-weight: 600;
         color: #334155;
         margin-top: 0.5rem;
+    }
+    .weather-detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    .weather-detail-item {
+        text-align: center;
+        flex: 1;
+    }
+    .weather-detail-label {
+        font-size: 0.7rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+    .weather-detail-value {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #0f172a;
     }
     .metric-card {
         background: white;
@@ -234,7 +255,6 @@ def load_feature_columns():
         feature_cols = joblib.load("models/feature_columns.pkl")
         return feature_cols
     except:
-        # Default feature columns if file not found
         return ['co', 'no', 'no2', 'o3', 'so2', 'pm2_5', 'pm10', 'nh3',
                 'hour', 'day', 'month', 'day_of_week', 'aqi_lag_1', 'aqi_change']
 
@@ -261,7 +281,7 @@ def get_aqi_category(aqi):
 
 @st.cache_data(ttl=1800)
 def get_weather_data():
-    """Fetch current weather data"""
+    """Fetch current weather data with enhanced details"""
     api_key = os.getenv("OPENWEATHER_API_KEY")
     lat, lon = 24.8607, 67.0011
     
@@ -278,15 +298,22 @@ def get_weather_data():
                 "success": True,
                 "temp": data["main"]["temp"],
                 "feels_like": data["main"]["feels_like"],
+                "temp_min": data["main"]["temp_min"],
+                "temp_max": data["main"]["temp_max"],
                 "humidity": data["main"]["humidity"],
                 "pressure": data["main"]["pressure"],
                 "wind_speed": data["wind"]["speed"],
                 "wind_deg": data["wind"].get("deg", 0),
                 "weather": data["weather"][0]["description"].capitalize(),
-                "visibility": data.get("visibility", 10000) / 1000
+                "weather_icon": data["weather"][0]["icon"],
+                "visibility": data.get("visibility", 10000) / 1000,
+                "clouds": data.get("clouds", {}).get("all", 0),
+                "sunrise": data.get("sys", {}).get("sunrise"),
+                "sunset": data.get("sys", {}).get("sunset")
             }
         return {"success": False}
-    except:
+    except Exception as e:
+        print(f"Weather API error: {e}")
         return {"success": False}
 
 def predict_aqi(features_dict):
@@ -294,7 +321,6 @@ def predict_aqi(features_dict):
     if model is None:
         return 75
     
-    # Ensure features are in correct order
     input_features = []
     for col in feature_columns:
         val = features_dict.get(col, 0)
@@ -325,20 +351,18 @@ def get_4day_forecast():
     now = datetime.now()
     base_aqi = predict_aqi(base_features)
     
-    for i in range(4):  # Changed from 5 to 4 days
+    for i in range(4):
         forecast_date = now + timedelta(days=i)
         
-        # Realistic AQI pattern - gets worse after 2-3 days
         if i == 0:
             aqi_value = base_aqi
         elif i == 1:
             aqi_value = base_aqi * (0.95 + np.random.uniform(-0.1, 0.15))
         elif i == 2:
             aqi_value = base_aqi * (1.0 + np.random.uniform(-0.1, 0.2))
-        else:  # i == 3 (Day 4)
+        else:
             aqi_value = base_aqi * (1.3 + np.random.uniform(0, 0.25))
         
-        # Add pollution build-up for consecutive bad days
         if i >= 2 and aqi_value > 100:
             aqi_value += 15 * (i - 1)
         
@@ -360,7 +384,7 @@ def get_4day_forecast():
     return forecasts
 
 def get_shap_feature_importance():
-    """Calculate SHAP-like feature importance using model's built-in feature_importances_"""
+    """Calculate SHAP-like feature importance"""
     if model is None:
         return None
     
@@ -383,36 +407,62 @@ def get_wind_direction(deg):
 # GET DATA
 # ============================================
 weather = get_weather_data()
-forecasts = get_4day_forecast()  # Changed to 4-day forecast
+forecasts = get_4day_forecast()
 current_aqi = predict_aqi(get_default_features())
 current_category, current_icon, current_color, current_desc = get_aqi_category(current_aqi)
 shap_importance = get_shap_feature_importance()
 
 # ============================================
-# HEADER SECTION
+# WEATHER AND LOCATION HEADER
 # ============================================
-col_loc, col_temp = st.columns([2, 1])
+col_loc, col_weather = st.columns([2, 2])
 
 with col_loc:
     st.markdown(f"""
     <div class="weather-header">
-        <div class="location-title">Karachi, Pakistan</div>
-        <div class="location-date">{datetime.now().strftime("%A, %B %d, %Y")} | Updated just now</div>
+        <div class="location-title"> Karachi, Pakistan</div>
+        <div class="location-date">{datetime.now().strftime("%A, %B %d, %Y")}</div>
+        <div class="location-date"> Last updated: {datetime.now().strftime("%I:%M %p")}</div>
     </div>
     """, unsafe_allow_html=True)
 
-with col_temp:
+with col_weather:
     if weather["success"]:
         st.markdown(f"""
-        <div class="weather-header" style="text-align: right;">
-            <div class="temp-display">{weather['temp']:.0f}<span class="temp-unit">°C</span></div>
-            <div class="weather-condition">{weather['weather']}</div>
-            <div class="weather-condition">Feels like {weather['feels_like']:.0f}°C</div>
+        <div class="weather-header">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <div class="temp-display">{weather['temp']:.0f}<span class="temp-unit">°C</span></div>
+                    <div class="weather-condition">{weather['weather']}</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 1rem; color: #475569;">Feels like</div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{weather['feels_like']:.0f}°C</div>
+                </div>
+            </div>
+            <div class="weather-detail-row">
+                <div class="weather-detail-item">
+                    <div class="weather-detail-label">🌡️ Min/Max</div>
+                    <div class="weather-detail-value">{weather['temp_min']:.0f}° / {weather['temp_max']:.0f}°</div>
+                </div>
+                <div class="weather-detail-item">
+                    <div class="weather-detail-label">💧 Humidity</div>
+                    <div class="weather-detail-value">{weather['humidity']}%</div>
+                </div>
+                <div class="weather-detail-item">
+                    <div class="weather-detail-label">🌬️ Wind</div>
+                    <div class="weather-detail-value">{weather['wind_speed']:.1f} km/h</div>
+                </div>
+                <div class="weather-detail-item">
+                    <div class="weather-detail-label">☁️ Clouds</div>
+                    <div class="weather-detail-value">{weather['clouds']}%</div>
+                </div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"""
-        <div class="weather-header" style="text-align: right;">
+        <div class="weather-header">
             <div class="temp-display">{current_aqi:.0f}<span class="temp-unit">AQI</span></div>
             <div class="weather-condition">{current_category}</div>
         </div>
@@ -452,7 +502,7 @@ elif current_aqi > 150:
 st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
 
 # ============================================
-# MANUAL PREDICTION SECTION (NEW)
+# MANUAL PREDICTION SECTION
 # ============================================
 st.markdown("## Manual AQI Prediction")
 st.markdown("*Adjust pollutant levels using sliders to see how AQI changes*")
@@ -461,32 +511,29 @@ with st.expander("Click to manually input pollutant values", expanded=False):
     st.markdown('<div class="manual-prediction-card">', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns(3)
-    
-    # Get default values
     default_features = get_default_features()
     
     with col1:
-        st.markdown("**Pollutant Levels**")
+        st.markdown("** Pollutant Levels**")
         manual_co = st.slider("Carbon Monoxide (CO) - μg/m³", 0.0, 500.0, default_features["co"], key="manual_co")
         manual_no = st.slider("Nitric Oxide (NO) - μg/m³", 0.0, 100.0, default_features["no"], key="manual_no")
         manual_no2 = st.slider("Nitrogen Dioxide (NO₂) - μg/m³", 0.0, 200.0, default_features["no2"], key="manual_no2")
         manual_o3 = st.slider("Ozone (O₃) - μg/m³", 0.0, 150.0, default_features["o3"], key="manual_o3")
     
     with col2:
-        st.markdown("**Particulate Matter**")
+        st.markdown("** Particulate Matter**")
         manual_so2 = st.slider("Sulfur Dioxide (SO₂) - μg/m³", 0.0, 50.0, default_features["so2"], key="manual_so2")
         manual_pm25 = st.slider("Fine Particles (PM2.5) - μg/m³", 0.0, 300.0, default_features["pm2_5"], key="manual_pm25")
         manual_pm10 = st.slider("Coarse Particles (PM10) - μg/m³", 0.0, 400.0, default_features["pm10"], key="manual_pm10")
         manual_nh3 = st.slider("Ammonia (NH₃) - μg/m³", 0.0, 50.0, default_features["nh3"], key="manual_nh3")
     
     with col3:
-        st.markdown("**Time Features**")
+        st.markdown("** Time Features**")
         manual_hour = st.slider("Hour of Day", 0, 23, default_features["hour"], key="manual_hour")
         manual_day = st.slider("Day of Month", 1, 31, default_features["day"], key="manual_day")
         manual_month = st.slider("Month", 1, 12, default_features["month"], key="manual_month")
         manual_aqi_lag = st.slider("Previous Hour AQI", 0.0, 300.0, default_features["aqi_lag_1"], key="manual_aqi_lag")
     
-    # Create features dictionary from sliders
     manual_features = {
         "co": manual_co, "no": manual_no, "no2": manual_no2, "o3": manual_o3,
         "so2": manual_so2, "pm2_5": manual_pm25, "pm10": manual_pm10, "nh3": manual_nh3,
@@ -495,15 +542,13 @@ with st.expander("Click to manually input pollutant values", expanded=False):
         "aqi_lag_1": manual_aqi_lag, "aqi_change": 0.0
     }
     
-    # Predict button
-    if st.button(" Predict AQI with Custom Values", use_container_width=True, key="manual_predict_btn"):
+    if st.button("Predict AQI with Custom Values", use_container_width=True, key="manual_predict_btn"):
         with st.spinner("Calculating prediction..."):
             manual_prediction = predict_aqi(manual_features)
             manual_category, manual_icon, manual_color, manual_desc = get_aqi_category(manual_prediction)
         
-        # Display prediction result
         st.markdown("---")
-        st.markdown("###  Your Custom Prediction Result")
+        st.markdown("### Your Custom Prediction Result")
         
         col_result1, col_result2, col_result3 = st.columns([1, 2, 1])
         with col_result2:
@@ -515,7 +560,6 @@ with st.expander("Click to manually input pollutant values", expanded=False):
             </div>
             """, unsafe_allow_html=True)
         
-        # Health recommendation based on manual prediction
         if manual_prediction <= 50:
             st.success("✅ **Excellent Air Quality!** Perfect for outdoor activities.")
         elif manual_prediction <= 100:
@@ -594,7 +638,7 @@ st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
 # ============================================
 # 4-DAY FORECAST
 # ============================================
-st.markdown("##  3-Day Air Quality Forecast")
+st.markdown("## 4-Day Air Quality Forecast")
 
 bad_future = any(f['AQI'] > 150 for f in forecasts[2:])
 if bad_future:
@@ -602,7 +646,7 @@ if bad_future:
 else:
     st.markdown("### ✅ Stable air quality expected")
 
-forecast_cols = st.columns(4)  # Changed from 5 to 4 columns
+forecast_cols = st.columns(4)
 
 for idx, forecast in enumerate(forecasts):
     with forecast_cols[idx]:
@@ -633,7 +677,6 @@ if shap_importance is not None and not shap_importance.empty:
     col_shap1, col_shap2 = st.columns([3, 2])
     
     with col_shap1:
-        # Create horizontal bar chart for feature importance
         fig_importance = px.bar(
             shap_importance.head(10),
             x='Importance',
@@ -706,7 +749,6 @@ fig.add_trace(go.Scatter(
     hovertemplate='<b>%{x}</b><br>AQI: %{y}<br>Category: %{text}<extra></extra>'
 ))
 
-# Add AQI level zones
 fig.add_hrect(y0=0, y1=50, fillcolor="#10b981", opacity=0.15, line_width=0)
 fig.add_hrect(y0=50, y1=100, fillcolor="#f59e0b", opacity=0.15, line_width=0)
 fig.add_hrect(y0=100, y1=150, fillcolor="#f97316", opacity=0.15, line_width=0)
@@ -721,9 +763,7 @@ fig.update_layout(
     title=dict(text="4-Day Air Quality Index Forecast", font=dict(size=18, weight='bold', color='#0f172a')),
     xaxis_title=dict(text="Day", font=dict(size=14, weight='bold', color='#475569')),
     yaxis_title=dict(text="AQI Value", font=dict(size=14, weight='bold', color='#475569')),
-    hovermode='x unified',
-    xaxis=dict(gridcolor='#e2e8f0', gridwidth=1),
-    yaxis=dict(gridcolor='#e2e8f0', gridwidth=1)
+    hovermode='x unified'
 )
 
 st.plotly_chart(fig, use_container_width=True, key="trend_chart")
@@ -804,8 +844,9 @@ else:
 # ============================================
 st.markdown("""
 <div class="footer-text">
-    <p>🌿 AirNet |  Real-time Air Quality Intelligence | Powered by OpenWeather API & Machine Learning</p>
-    <p>Forecast confidence: Medium. Air quality can change rapidly based on local conditions.</p>
-    <p>Data updates every hour | Model retrains daily| "Breathe Clean. Live Better" - AirNet </p>
+    <p>🌿 AirNet | Real-time Air Quality Intelligence | Powered by OpenWeather API & Machine Learning</p>
+    <p>📍 Karachi, Pakistan | Data updates every hour | Model retrains daily</p>
+    <p> Current weather data includes: Temperature (Current, Min/Max, Feels Like), Humidity, Wind Speed, Cloud Cover, Visibility</p>
+    <p>"Breathe Clean. Live Better" - AirNet</p>
 </div>
 """, unsafe_allow_html=True)
