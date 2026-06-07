@@ -1,5 +1,5 @@
 # 🌿 AirNet - "Breathe Clean. Live Better"
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)] (https://airnet.streamlit.app/)
+(https://airnet.streamlit.app/)
 
 ## Live Demo
  **Try the live application:** [AirNet AQI Dashboard] ([https://your-app-name.streamlit.app](https://airnet.streamlit.app/))
