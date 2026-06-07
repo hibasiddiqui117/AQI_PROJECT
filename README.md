@@ -1,4 +1,4 @@
-# 🌿 AirNet - Real-time AQI Forecasting System
+# 🌿 AirNet - "Breathe Clean. Live Better"
 
 ## Overview
 AirNet is an end-to-end MLOps pipeline for real-time Air Quality Index (AQI) forecasting for Karachi, Pakistan.
