@@ -5,7 +5,7 @@ AirNet is an end-to-end MLOps pipeline for real-time Air Quality Index (AQI) for
 
 ## Features
 - Real-time AQI data from OpenWeather API
-- 5-day AQI forecast with degradation patterns
+- 3-day AQI forecast with degradation patterns
 - Machine learning models (Random Forest with 98.7% accuracy)
 - Interactive MSN Weather-style dashboard
 - Automated data collection (every hour)
