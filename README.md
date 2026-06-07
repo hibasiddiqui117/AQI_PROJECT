@@ -30,7 +30,7 @@ AirNet is an end-to-end MLOps pipeline for real-time Air Quality Index (AQI) for
 - GitHub Actions for automation
 
 ## Dashboard Preview
-5-day AQI forecast
+3-day AQI forecast
 
 Real-time weather data
 
