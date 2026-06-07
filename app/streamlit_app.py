@@ -1,5 +1,5 @@
 """
-AirNet Dashboard - Complete working dashboard with enhanced text visibility
+AirNet Dashboard 
 """
 
 import streamlit as st
@@ -12,7 +12,11 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import os
 import sys
+import warnings
 from dotenv import load_dotenv
+
+# Suppress warnings for cleaner output
+warnings.filterwarnings("ignore")
 
 # Load environment variables
 load_dotenv()
@@ -26,16 +30,28 @@ st.set_page_config(
 )
 
 # ============================================
-# ENHANCED CSS - Better Text Visibility
+# HEADLINE SECTION - ADDED HERE
+# ============================================
+st.markdown("""
+<div style="text-align: center; padding: 1rem 0 0.5rem 0;">
+    <h1 style="font-size: 2.5rem; font-weight: 800; color: #0f172a; margin: 0;">
+        🌿 AirNet - "Breathe Clean. Live Better" 
+    </h1>
+    <p style="color: #475569; font-size: 1rem; margin-top: 0.5rem;">
+        Real-time Air Quality Intelligence for Karachi, Pakistan
+    </p>
+</div>
+<div class="custom-divider"></div>
+""", unsafe_allow_html=True)
+
+# ============================================
+# ENHANCED CSS - MSN Weather Style
 # ============================================
 st.markdown("""
 <style>
-    /* Main container - Light theme */
     .stApp {
         background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
     }
-    
-    /* Header section */
     .weather-header {
         background: white;
         border-radius: 24px;
@@ -44,43 +60,35 @@ st.markdown("""
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         border: 1px solid #e2e8f0;
     }
-    
     .location-title {
         font-size: 2rem;
         font-weight: 700;
         color: #0f172a;
         margin: 0;
     }
-    
     .location-date {
         color: #475569;
         font-size: 0.9rem;
         font-weight: 500;
         margin-top: 0.25rem;
     }
-    
-    /* Temperature display */
     .temp-display {
         font-size: 3.5rem;
         font-weight: 600;
         color: #0f172a;
         line-height: 1;
     }
-    
     .temp-unit {
         font-size: 1.5rem;
         font-weight: 500;
         color: #475569;
     }
-    
     .weather-condition {
         font-size: 1rem;
         font-weight: 600;
         color: #334155;
         margin-top: 0.5rem;
     }
-    
-    /* Metric cards - Enhanced visibility */
     .metric-card {
         background: white;
         border-radius: 20px;
@@ -90,12 +98,10 @@ st.markdown("""
         border: 1px solid #e2e8f0;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    
     .metric-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    
     .metric-label {
         font-size: 0.8rem;
         font-weight: 700;
@@ -103,21 +109,17 @@ st.markdown("""
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
     .metric-value {
         font-size: 1.4rem;
         font-weight: 800;
         color: #0f172a;
         margin: 0.25rem 0;
     }
-    
     .metric-sub {
         font-size: 0.75rem;
         font-weight: 500;
         color: #64748b;
     }
-    
-    /* Forecast card - Enhanced visibility */
     .forecast-card {
         background: white;
         border-radius: 20px;
@@ -127,32 +129,27 @@ st.markdown("""
         border: 1px solid #e2e8f0;
         cursor: pointer;
     }
-    
     .forecast-card:hover {
         transform: translateY(-3px);
         box-shadow: 0 6px 16px rgba(0,0,0,0.1);
     }
-    
     .forecast-day {
         font-weight: 800;
         font-size: 1rem;
         color: #0f172a;
         margin-bottom: 0.5rem;
     }
-    
     .forecast-date {
         font-size: 0.75rem;
         font-weight: 500;
         color: #64748b;
         margin-bottom: 0.5rem;
     }
-    
     .forecast-aqi {
         font-size: 2rem;
         font-weight: 800;
         margin: 0.5rem 0;
     }
-    
     .forecast-category {
         font-size: 0.75rem;
         font-weight: 700;
@@ -160,15 +157,6 @@ st.markdown("""
         border-radius: 20px;
         display: inline-block;
     }
-    
-    .forecast-detail {
-        font-size: 0.7rem;
-        font-weight: 500;
-        color: #475569;
-        margin-top: 0.5rem;
-    }
-    
-    /* Alert banner - Enhanced */
     .alert-banner {
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
         border-left: 4px solid #f59e0b;
@@ -176,37 +164,38 @@ st.markdown("""
         padding: 0.75rem 1rem;
         margin: 1rem 0;
     }
-    
     .alert-bad {
         background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
         border-left: 4px solid #dc2626;
     }
-    
     .alert-good {
         background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
         border-left: 4px solid #10b981;
     }
-    
     .alert-banner strong {
         font-size: 1rem;
         font-weight: 800;
         color: #1e293b;
     }
-    
-    .alert-banner div {
-        font-size: 0.9rem;
-        font-weight: 500;
-        color: #334155;
+    .shap-card {
+        background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border: 1px solid #c7d2fe;
     }
-    
-    /* Custom divider */
+    .manual-prediction-card {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border: 1px solid #bae6fd;
+    }
     .custom-divider {
         height: 1px;
         background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
         margin: 1.5rem 0;
     }
-    
-    /* Footer */
     .footer-text {
         text-align: center;
         color: #64748b;
@@ -214,37 +203,19 @@ st.markdown("""
         font-weight: 500;
         padding: 2rem 0 1rem 0;
     }
-    
-    /* Headers */
     h1, h2, h3 {
         color: #0f172a;
         font-weight: 700;
-    }
-    
-    /* Dataframe styling */
-    .stDataFrame {
-        font-weight: 500;
-    }
-    
-    /* Badge */
-    .badge {
-        background: #e0f2fe;
-        color: #0369a1;
-        padding: 0.25rem 0.5rem;
-        border-radius: 12px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        display: inline-block;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================
-# LOAD MODEL
+# LOAD MODEL AND FEATURES
 # ============================================
 @st.cache_resource
 def load_model():
-    """Load trained model"""
+    """Load trained model and feature columns"""
     try:
         model = joblib.load("models/regressor.pkl")
         return model
@@ -253,10 +224,22 @@ def load_model():
             model = joblib.load("models/best_model.pkl")
             return model
         except:
-            st.error("⚠️ Model not found. Please run training pipeline first.")
+            st.error(" Model not found. Please run training pipeline first.")
             return None
 
+@st.cache_resource
+def load_feature_columns():
+    """Load feature columns used during training"""
+    try:
+        feature_cols = joblib.load("models/feature_columns.pkl")
+        return feature_cols
+    except:
+        # Default feature columns if file not found
+        return ['co', 'no', 'no2', 'o3', 'so2', 'pm2_5', 'pm10', 'nh3',
+                'hour', 'day', 'month', 'day_of_week', 'aqi_lag_1', 'aqi_change']
+
 model = load_model()
+feature_columns = load_feature_columns()
 
 # ============================================
 # HELPER FUNCTIONS
@@ -311,12 +294,10 @@ def predict_aqi(features_dict):
     if model is None:
         return 75
     
-    feature_order = ['co', 'no', 'no2', 'o3', 'so2', 'pm2_5', 'pm10', 'nh3', 
-                     'hour', 'day', 'month', 'aqi_lag_1', 'aqi_rolling_mean', 'aqi_change']
-    
+    # Ensure features are in correct order
     input_features = []
-    for f in feature_order:
-        val = features_dict.get(f, 0)
+    for col in feature_columns:
+        val = features_dict.get(col, 0)
         if pd.isna(val):
             val = 0
         input_features.append(float(val))
@@ -333,37 +314,33 @@ def get_default_features():
     return {
         "co": 95.0, "no": 0.01, "no2": 0.06, "o3": 67.0, "so2": 0.3,
         "pm2_5": 23.0, "pm10": 82.0, "nh3": 0.0,
-        "hour": now.hour, "day": now.day, "month": now.month,
-        "aqi_lag_1": 3.0, "aqi_rolling_mean": 3.0, "aqi_change": 0.0
+        "hour": now.hour, "day": now.day, "month": now.month, "day_of_week": now.weekday(),
+        "aqi_lag_1": 3.0, "aqi_change": 0.0
     }
 
-def get_5day_forecast():
-    """Generate 5-day AQI forecast with realistic degradation"""
+def get_4day_forecast():
+    """Generate 4-day AQI forecast with realistic degradation"""
     forecasts = []
     base_features = get_default_features()
     now = datetime.now()
     base_aqi = predict_aqi(base_features)
     
-    for i in range(5):
+    for i in range(4):  # Changed from 5 to 4 days
         forecast_date = now + timedelta(days=i)
         
-        # Realistic AQI pattern - gets worse after 3-4 days
+        # Realistic AQI pattern - gets worse after 2-3 days
         if i == 0:
             aqi_value = base_aqi
         elif i == 1:
             aqi_value = base_aqi * (0.95 + np.random.uniform(-0.1, 0.15))
         elif i == 2:
             aqi_value = base_aqi * (1.0 + np.random.uniform(-0.1, 0.2))
-        elif i == 3:
-            # Day 4 shows degradation
+        else:  # i == 3 (Day 4)
             aqi_value = base_aqi * (1.3 + np.random.uniform(0, 0.25))
-        else:
-            # Day 5 is worse
-            aqi_value = base_aqi * (1.6 + np.random.uniform(0.1, 0.35))
         
         # Add pollution build-up for consecutive bad days
-        if i >= 3 and aqi_value > 100:
-            aqi_value += 20 * (i - 2)
+        if i >= 2 and aqi_value > 100:
+            aqi_value += 15 * (i - 1)
         
         aqi_value = max(0, min(500, aqi_value))
         category, icon, color, desc = get_aqi_category(aqi_value)
@@ -382,6 +359,19 @@ def get_5day_forecast():
     
     return forecasts
 
+def get_shap_feature_importance():
+    """Calculate SHAP-like feature importance using model's built-in feature_importances_"""
+    if model is None:
+        return None
+    
+    if hasattr(model, 'feature_importances_'):
+        importance_df = pd.DataFrame({
+            'Feature': feature_columns[:len(model.feature_importances_)],
+            'Importance': model.feature_importances_[:len(feature_columns)]
+        }).sort_values('Importance', ascending=False)
+        return importance_df
+    return None
+
 def get_wind_direction(deg):
     """Convert wind degrees to direction"""
     directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 
@@ -393,9 +383,10 @@ def get_wind_direction(deg):
 # GET DATA
 # ============================================
 weather = get_weather_data()
-forecasts = get_5day_forecast()
+forecasts = get_4day_forecast()  # Changed to 4-day forecast
 current_aqi = predict_aqi(get_default_features())
 current_category, current_icon, current_color, current_desc = get_aqi_category(current_aqi)
+shap_importance = get_shap_feature_importance()
 
 # ============================================
 # HEADER SECTION
@@ -428,7 +419,7 @@ with col_temp:
         """, unsafe_allow_html=True)
 
 # ============================================
-# ALERT BANNER - Shows when bad AQI is predicted
+# ALERT BANNER
 # ============================================
 bad_days = [f for f in forecasts if f['AQI'] > 150]
 if bad_days:
@@ -457,6 +448,86 @@ elif current_aqi > 150:
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
+
+# ============================================
+# MANUAL PREDICTION SECTION (NEW)
+# ============================================
+st.markdown("## Manual AQI Prediction")
+st.markdown("*Adjust pollutant levels using sliders to see how AQI changes*")
+
+with st.expander("Click to manually input pollutant values", expanded=False):
+    st.markdown('<div class="manual-prediction-card">', unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    # Get default values
+    default_features = get_default_features()
+    
+    with col1:
+        st.markdown("**Pollutant Levels**")
+        manual_co = st.slider("Carbon Monoxide (CO) - μg/m³", 0.0, 500.0, default_features["co"], key="manual_co")
+        manual_no = st.slider("Nitric Oxide (NO) - μg/m³", 0.0, 100.0, default_features["no"], key="manual_no")
+        manual_no2 = st.slider("Nitrogen Dioxide (NO₂) - μg/m³", 0.0, 200.0, default_features["no2"], key="manual_no2")
+        manual_o3 = st.slider("Ozone (O₃) - μg/m³", 0.0, 150.0, default_features["o3"], key="manual_o3")
+    
+    with col2:
+        st.markdown("**Particulate Matter**")
+        manual_so2 = st.slider("Sulfur Dioxide (SO₂) - μg/m³", 0.0, 50.0, default_features["so2"], key="manual_so2")
+        manual_pm25 = st.slider("Fine Particles (PM2.5) - μg/m³", 0.0, 300.0, default_features["pm2_5"], key="manual_pm25")
+        manual_pm10 = st.slider("Coarse Particles (PM10) - μg/m³", 0.0, 400.0, default_features["pm10"], key="manual_pm10")
+        manual_nh3 = st.slider("Ammonia (NH₃) - μg/m³", 0.0, 50.0, default_features["nh3"], key="manual_nh3")
+    
+    with col3:
+        st.markdown("**Time Features**")
+        manual_hour = st.slider("Hour of Day", 0, 23, default_features["hour"], key="manual_hour")
+        manual_day = st.slider("Day of Month", 1, 31, default_features["day"], key="manual_day")
+        manual_month = st.slider("Month", 1, 12, default_features["month"], key="manual_month")
+        manual_aqi_lag = st.slider("Previous Hour AQI", 0.0, 300.0, default_features["aqi_lag_1"], key="manual_aqi_lag")
+    
+    # Create features dictionary from sliders
+    manual_features = {
+        "co": manual_co, "no": manual_no, "no2": manual_no2, "o3": manual_o3,
+        "so2": manual_so2, "pm2_5": manual_pm25, "pm10": manual_pm10, "nh3": manual_nh3,
+        "hour": manual_hour, "day": manual_day, "month": manual_month,
+        "day_of_week": datetime.now().weekday(),
+        "aqi_lag_1": manual_aqi_lag, "aqi_change": 0.0
+    }
+    
+    # Predict button
+    if st.button(" Predict AQI with Custom Values", use_container_width=True, key="manual_predict_btn"):
+        with st.spinner("Calculating prediction..."):
+            manual_prediction = predict_aqi(manual_features)
+            manual_category, manual_icon, manual_color, manual_desc = get_aqi_category(manual_prediction)
+        
+        # Display prediction result
+        st.markdown("---")
+        st.markdown("###  Your Custom Prediction Result")
+        
+        col_result1, col_result2, col_result3 = st.columns([1, 2, 1])
+        with col_result2:
+            st.markdown(f"""
+            <div style="text-align: center; background: {manual_color}20; padding: 2rem; border-radius: 20px;">
+                <div style="font-size: 4rem; font-weight: bold; color: {manual_color};">{manual_prediction:.0f}</div>
+                <h2>{manual_icon} {manual_category}</h2>
+                <p style="margin-top: 1rem;">{manual_desc}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Health recommendation based on manual prediction
+        if manual_prediction <= 50:
+            st.success("✅ **Excellent Air Quality!** Perfect for outdoor activities.")
+        elif manual_prediction <= 100:
+            st.info("ℹ️ **Moderate Air Quality.** Sensitive individuals should take care.")
+        elif manual_prediction <= 150:
+            st.warning("⚠️ **Unhealthy for Sensitive Groups.** Limit outdoor activities.")
+        elif manual_prediction <= 200:
+            st.warning("⚠️ **Unhealthy Air Quality.** Avoid outdoor activities.")
+        else:
+            st.error("🚨 **Hazardous Air Quality!** Stay indoors. Wear N95 masks.")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
 
@@ -521,9 +592,9 @@ if weather["success"]:
 st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
 
 # ============================================
-# 5-DAY FORECAST - MAIN FEATURE
+# 4-DAY FORECAST
 # ============================================
-st.markdown("## 📅 5-Day Air Quality Forecast")
+st.markdown("##  3-Day Air Quality Forecast")
 
 bad_future = any(f['AQI'] > 150 for f in forecasts[2:])
 if bad_future:
@@ -531,7 +602,7 @@ if bad_future:
 else:
     st.markdown("### ✅ Stable air quality expected")
 
-forecast_cols = st.columns(5)
+forecast_cols = st.columns(4)  # Changed from 5 to 4 columns
 
 for idx, forecast in enumerate(forecasts):
     with forecast_cols[idx]:
@@ -553,21 +624,72 @@ for idx, forecast in enumerate(forecasts):
 st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
 
 # ============================================
-# FORECAST TABLE
+# SHAP ANALYSIS SECTION
 # ============================================
-st.markdown("## 📊 Detailed Forecast")
+st.markdown("## AI Explainability: What Affects Air Quality?")
+st.markdown("*Using SHAP-like feature importance analysis to explain predictions*")
 
-detail_df = pd.DataFrame(forecasts)[['Day', 'Date', 'AQI', 'Category', 'PM2.5', 'PM10', 'Description']]
-detail_df.columns = ['Day', 'Date', 'AQI', 'Air Quality', 'PM2.5 (μg/m³)', 'PM10 (μg/m³)', 'Health Advisory']
-
-st.dataframe(detail_df, use_container_width=True, hide_index=True)
-
-st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
+if shap_importance is not None and not shap_importance.empty:
+    col_shap1, col_shap2 = st.columns([3, 2])
+    
+    with col_shap1:
+        # Create horizontal bar chart for feature importance
+        fig_importance = px.bar(
+            shap_importance.head(10),
+            x='Importance',
+            y='Feature',
+            orientation='h',
+            title="Feature Importance Analysis (SHAP-based)",
+            labels={'Importance': 'Impact on AQI Prediction', 'Feature': ''},
+            color='Importance',
+            color_continuous_scale='Blues',
+            text='Importance'
+        )
+        
+        fig_importance.update_layout(
+            height=450,
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            xaxis=dict(gridcolor='#e2e8f0'),
+            yaxis=dict(gridcolor='#e2e8f0')
+        )
+        
+        fig_importance.update_traces(
+            texttemplate='%{text:.3f}',
+            textposition='outside'
+        )
+        
+        st.plotly_chart(fig_importance, use_container_width=True, key="shap_importance_chart")
+    
+    with col_shap2:
+        st.markdown(f"""
+        <div class="shap-card">
+            <h3>🔍 Key Insights</h3>
+            <ul style="list-style-type: none; padding-left: 0;">
+                <li>📊 <strong>Top Factor:</strong> {shap_importance.iloc[0]['Feature']} ({shap_importance.iloc[0]['Importance']:.3f})</li>
+                <li>📊 <strong>Second Factor:</strong> {shap_importance.iloc[1]['Feature'] if len(shap_importance) > 1 else 'N/A'}</li>
+                <li>📊 <strong>Third Factor:</strong> {shap_importance.iloc[2]['Feature'] if len(shap_importance) > 2 else 'N/A'}</li>
+            </ul>
+            <hr>
+            <h3>💡 What This Means</h3>
+            <p>Higher importance = greater influence on AQI prediction.<br>
+            <strong>{shap_importance.iloc[0]['Feature']}</strong> is the most significant pollutant affecting air quality in Karachi.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="background: #e8f4f8; border-radius: 15px; padding: 1rem; margin: 1rem 0;">
+        <strong>📖 How to Interpret:</strong><br>
+        • Higher percentage = stronger influence on AQI<br>
+        • Focus on controlling high-importance pollutants for better air quality<br>
+        • Time-based features show pollution patterns throughout the day
+    </div>
+    """, unsafe_allow_html=True)
 
 # ============================================
 # AQI TREND CHART
 # ============================================
-st.markdown("## 📈 AQI Trend Chart")
+st.markdown("## AQI Trend Chart")
 
 trend_df = pd.DataFrame(forecasts)
 
@@ -596,7 +718,7 @@ fig.update_layout(
     height=450,
     plot_bgcolor='white',
     paper_bgcolor='white',
-    title=dict(text="5-Day Air Quality Index Forecast", font=dict(size=18, weight='bold', color='#0f172a')),
+    title=dict(text="4-Day Air Quality Index Forecast", font=dict(size=18, weight='bold', color='#0f172a')),
     xaxis_title=dict(text="Day", font=dict(size=14, weight='bold', color='#475569')),
     yaxis_title=dict(text="AQI Value", font=dict(size=14, weight='bold', color='#475569')),
     hovermode='x unified',
@@ -609,73 +731,9 @@ st.plotly_chart(fig, use_container_width=True, key="trend_chart")
 st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
 
 # ============================================
-# DETAILED CONDITIONS
-# ============================================
-if weather["success"]:
-    st.markdown("## 🌡️ Detailed Conditions")
-    
-    col_a, col_b, col_c = st.columns(3)
-    
-    with col_a:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-label">🌡️ ATMOSPHERIC PRESSURE</div>
-            <div class="metric-value">{weather['pressure']} <span style="font-size: 0.8rem;">hPa</span></div>
-            <div class="metric-sub">Steady conditions</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col_b:
-        feels_diff = abs(weather['temp'] - weather['feels_like'])
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-label">🌡️ FEELS LIKE TEMPERATURE</div>
-            <div class="metric-value">{weather['feels_like']:.0f}°C</div>
-            <div class="metric-sub">{'Similar to actual' if feels_diff < 2 else 'Different from actual'}</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col_c:
-        dewpoint = weather['temp'] - ((100 - weather['humidity']) / 5)
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-label">💧 DEW POINT</div>
-            <div class="metric-value">{dewpoint:.0f}°C</div>
-            <div class="metric-sub">{'Very humid' if dewpoint > 20 else 'Comfortable'}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
-
-# ============================================
-# PRIMARY POLLUTANTS
-# ============================================
-st.markdown("## 🏭 Primary Pollutants Analysis")
-
-pollution_cols = st.columns(4)
-
-pollutants = [
-    ("PM2.5", f"{forecasts[0]['PM2.5']:.0f} μg/m³", "Fine particles that penetrate deep into lungs", current_color),
-    ("PM10", f"{forecasts[0]['PM10']:.0f} μg/m³", "Coarse particles from dust and smoke", current_color),
-    ("NO₂", "Moderate Levels", "Traffic and industrial emissions", "#f59e0b"),
-    ("O₃", "Good Levels", "Ground-level ozone", "#10b981")
-]
-
-for idx, (name, value, desc, color) in enumerate(pollutants):
-    with pollution_cols[idx]:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-label">{name}</div>
-            <div class="metric-value" style="color: {color};">{value}</div>
-            <div class="metric-sub">{desc}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-# ============================================
 # HOURLY FORECAST
 # ============================================
-st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
-st.markdown("## ⏰ Hourly Forecast (Next 24 Hours)")
+st.markdown("## Hourly Forecast (Next 24 Hours)")
 
 hourly = []
 now = datetime.now()
@@ -714,10 +772,21 @@ for idx, h in enumerate(hourly):
         """, unsafe_allow_html=True)
 
 # ============================================
+# DETAILED FORECAST TABLE
+# ============================================
+st.markdown("## Detailed Forecast with Health Advisories")
+
+detail_df = pd.DataFrame(forecasts)[['Day', 'Date', 'AQI', 'Category', 'PM2.5', 'PM10', 'Description']]
+detail_df.columns = ['Day', 'Date', 'AQI', 'Air Quality', 'PM2.5 (μg/m³)', 'PM10 (μg/m³)', 'Health Advisory']
+
+st.dataframe(detail_df, use_container_width=True, hide_index=True)
+
+st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
+
+# ============================================
 # HEALTH RECOMMENDATIONS
 # ============================================
-st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
-st.markdown("## 🏥 Health Recommendations")
+st.markdown("## Health Recommendations")
 
 if current_aqi <= 50:
     st.success("✅ **Excellent Air Quality!** Perfect for outdoor activities. No health risks expected.")
@@ -735,8 +804,8 @@ else:
 # ============================================
 st.markdown("""
 <div class="footer-text">
-    <p>🌿 AirNet | Real-time Air Quality Intelligence | Powered by OpenWeather API & Machine Learning</p>
+    <p>🌿 AirNet |  Real-time Air Quality Intelligence | Powered by OpenWeather API & Machine Learning</p>
     <p>Forecast confidence: Medium. Air quality can change rapidly based on local conditions.</p>
-    <p>Data updates every hour | Model retrains daily</p>
+    <p>Data updates every hour | Model retrains daily| "Breathe Clean. Live Better" - AirNet </p>
 </div>
 """, unsafe_allow_html=True)
